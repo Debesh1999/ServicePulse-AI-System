@@ -24,6 +24,7 @@ public class HealthController : ControllerBase
     }
 
     [HttpGet]
+    [Microsoft.AspNetCore.Authorization.AllowAnonymous]
     [EndpointName("health")]
     [Produces(typeof(HealthStatus))]
     public async Task<IActionResult> GetHealth()

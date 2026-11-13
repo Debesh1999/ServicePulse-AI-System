@@ -1,3 +1,4 @@
+using BCrypt.Net;
 using Microsoft.EntityFrameworkCore;
 using ServicePulse.Domain.Entities;
 using ServicePulse.Infrastructure.Persistence;
@@ -15,7 +16,7 @@ public class DataSeeder
         {
             Id = Guid.NewGuid(),
             Email = "admin@servicepulse.local",
-            PasswordHash = "HASH_PLACEHOLDER_admin",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
             DisplayName = "System Admin",
             Role = "Admin",
             IsActive = true,
@@ -25,7 +26,7 @@ public class DataSeeder
         {
             Id = Guid.NewGuid(),
             Email = "priya.sharma@servicepulse.local",
-            PasswordHash = "HASH_PLACEHOLDER_priya",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Priya@123"),
             DisplayName = "Priya Sharma",
             Role = "Manager",
             IsActive = true,
@@ -35,7 +36,7 @@ public class DataSeeder
         {
             Id = Guid.NewGuid(),
             Email = "alice.johnson@servicepulse.local",
-            PasswordHash = "HASH_PLACEHOLDER_alice",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Alice@123"),
             DisplayName = "Alice Johnson",
             Role = "Agent",
             IsActive = true,

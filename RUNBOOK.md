@@ -38,7 +38,7 @@ Open `http://localhost:3000` in your browser.
 cd backend
 dotnet test src/ServicePulse.Tests/ServicePulse.Tests.csproj
 ```
-Expected: `Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9`
+Expected: `Passed! - Failed: 0, Passed: 18, Skipped: 0, Total: 18`
 
 ## 3. Common Operations
 
@@ -91,8 +91,53 @@ http://localhost:5295
 | 7 | Create - Missing Agent | POST | `/api/calls` | 400 Bad Request |
 | 8 | Unknown Call ID | GET | `/api/calls/00000000-0000-0000-0000-000000000000` | 404 Not Found |
 
-### 4.3 Create Call — Request Body
-```json
+### 4.3 Auth Endpoints (v2)
+
+**Register a new user:**
+```
+POST /api/auth/register
+Content-Type: application/json
+
+{
+  "email": "newuser@example.com",
+  "password": "Secure@123",
+  "displayName": "New User",
+  "role": "Agent"
+}
+```
+Response: 201 Created — `TokenResponse { accessToken, tokenType, expiresIn, user }`
+
+**Login:**
+```
+POST /api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@servicepulse.local",
+  "password": "Admin@123"
+}
+```
+Response: 200 OK — JWT access token
+
+**Get current user:**
+```
+GET /api/auth/me
+Authorization: Bearer <token-from-login>
+```
+Response: 200 OK — `{ id, email, displayName, role }`
+
+**Default credentials (seeded on first run):**
+| Email | Password | Role |
+|---|---|---|
+| admin@servicepulse.local | Admin@123 | Admin |
+| priya.sharma@servicepulse.local | Priya@123 | Manager |
+| alice.johnson@servicepulse.local | Alice@123 | Agent |
+
+### 4.4 Create Call — Request Body (requires auth token in Header)
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+Content-Type: application/json
+
 {
   "agentName": "Alice Johnson",
   "customerName": "Sarah O'Brien",
@@ -102,7 +147,13 @@ http://localhost:5295
   "transcriptText": "Hello, this is a test call transcript."
 }
 ```
-Headers: `Content-Type: application/json`
+
+### 4.5 Auth Required Endpoints
+
+All endpoints except `/api/health`, `/api/auth/register`, and `/api/auth/login` require a valid JWT bearer token. A request without a token returns **401 Unauthorized**. Add the header to every protected request:
+```
+Authorization: Bearer <your-token>
+```
 
 ## 5. Troubleshooting
 
@@ -133,7 +184,18 @@ ServicePulse_AI_System/
 └── RUNBOOK.md                            # This file
 ```
 
-## 7. V1 Feature Checklist
+## 7. V2 Feature Checklist — Authentication & Authorization
+
+- [x] `POST /api/auth/register` — create new account with BCrypt password hashing
+- [x] `POST /api/auth/login` — authenticate and issue 1-hour JWT token
+- [x] `GET /api/auth/me` — resolve current user from JWT claims
+- [x] `[Authorize]` guard on CallsController and LookupController
+- [x] `[AllowAnonymous]` on HealthController (public endpoint)
+- [x] Auto-seeded admin user on first startup (`SeedAdminIfNeeded`)
+- [x] 9 AuthService unit tests covering edge cases (duplicate email, wrong password, inactive account, case-insensitive login)
+- [x] Global exception middleware surfaces token errors consistently
+
+## 8. V1 Feature Checklist
 
 - [x] Calls CRUD endpoints (GetCalls, GetCall, SearchCalls, GetStats, CreateCall)
 - [x] Pagination and search/filter (by agent name, customer name, status, date range)
@@ -147,7 +209,7 @@ ServicePulse_AI_System/
 - [x] Frontend pager component
 - [x] Postman API verification complete
 
-## 8. Deploying to GitHub
+## 9. Deploying to GitHub
 
 ```bash
 # Check current state
