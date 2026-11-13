@@ -1,0 +1,389 @@
+{
+  "settings": {
+    "components": {
+      "code": true,
+      "binaries": false
+    },
+    "targetId": ""
+  },
+  "analysisStartTime": "2026-11-11T11:44:38.6582917Z",
+  "analysisEndTime": "2026-11-11T11:44:38.9064311Z",
+  "privacyModeHelpUrl": "https://go.microsoft.com/fwlink/?linkid=2270980",
+  "stats": {
+    "summary": {
+      "projects": 5,
+      "issues": 1,
+      "incidents": 8,
+      "effort": 0
+    },
+    "charts": {
+      "severity": {
+        "Mandatory": 0,
+        "Optional": 0,
+        "Potential": 0,
+        "Information": 8
+      },
+      "category": {
+        "Pkg": 8
+      }
+    }
+  },
+  "projects": [
+    {
+      "path": "ServicePulse.Api\\ServicePulse.Api.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ServicePulse.Api",
+        "projectKind": "AspNetCore",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "isTestProject": false,
+        "numberOfFiles": 49,
+        "numberOfCodeFiles": 1,
+        "linesTotal": 111384,
+        "linesOfCode": 39,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "37d577fe-d2b6-4a5e-ae82-ed4de4e14d4f",
+          "ruleId": "Pkg.0001",
+          "description": "Project references \u0027Microsoft.EntityFrameworkCore.Design\u0027 10.0.0; proposed upgrade to 10.0.15.",
+          "projectPath": "ServicePulse.Api\\ServicePulse.Api.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.Design, 10.0.0",
+              "protected": "Microsoft.EntityFrameworkCore.Design, 10.0.0"
+            },
+            "kind": "File",
+            "path": "ServicePulse.Api\\ServicePulse.Api.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.Design, 10.0.0",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.Design, 10.0.0",
+            "label": "Microsoft.EntityFrameworkCore.Design 10.0.0",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.Design",
+              "PackageVersion": "10.0.0",
+              "PackageNewVersion": "10.0.15",
+              "PackageReplacements": null
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "ServicePulse.Application\\ServicePulse.Application.csproj",
+      "startingProject": true,
+      "issues": 0,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ServicePulse.Application",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "isTestProject": false,
+        "numberOfFiles": 1,
+        "numberOfCodeFiles": 1,
+        "linesTotal": 6,
+        "linesOfCode": 6,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [],
+      "features": []
+    },
+    {
+      "path": "ServicePulse.Domain\\ServicePulse.Domain.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ServicePulse.Domain",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "isTestProject": false,
+        "numberOfFiles": 9,
+        "numberOfCodeFiles": 9,
+        "linesTotal": 340,
+        "linesOfCode": 340,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "dede95e1-c36c-4471-a036-23fac383a5b4",
+          "ruleId": "Pkg.0001",
+          "description": "Project references \u0027Microsoft.EntityFrameworkCore\u0027 10.0.0; proposed upgrade to 10.0.15.",
+          "projectPath": "ServicePulse.Domain\\ServicePulse.Domain.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore, 10.0.0",
+              "protected": "Microsoft.EntityFrameworkCore, 10.0.0"
+            },
+            "kind": "File",
+            "path": "ServicePulse.Domain\\ServicePulse.Domain.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore, 10.0.0",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore, 10.0.0",
+            "label": "Microsoft.EntityFrameworkCore 10.0.0",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore",
+              "PackageVersion": "10.0.0",
+              "PackageNewVersion": "10.0.15",
+              "PackageReplacements": null
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "ServicePulse.Infrastructure\\ServicePulse.Infrastructure.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ServicePulse.Infrastructure",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "isTestProject": false,
+        "numberOfFiles": 5,
+        "numberOfCodeFiles": 5,
+        "linesTotal": 1458,
+        "linesOfCode": 1458,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "3c3d4553-75f7-47d4-8086-8d094ddd108b",
+          "ruleId": "Pkg.0001",
+          "description": "Project references \u0027Microsoft.EntityFrameworkCore.SqlServer\u0027 10.0.0; proposed upgrade to 10.0.15.",
+          "projectPath": "ServicePulse.Infrastructure\\ServicePulse.Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.SqlServer, 10.0.0",
+              "protected": "Microsoft.EntityFrameworkCore.SqlServer, 10.0.0"
+            },
+            "kind": "File",
+            "path": "ServicePulse.Infrastructure\\ServicePulse.Infrastructure.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.SqlServer, 10.0.0",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.SqlServer, 10.0.0",
+            "label": "Microsoft.EntityFrameworkCore.SqlServer 10.0.0",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.SqlServer",
+              "PackageVersion": "10.0.0",
+              "PackageNewVersion": "10.0.15",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "54a2dad0-ca45-4278-8a87-8da1770ad408",
+          "ruleId": "Pkg.0001",
+          "description": "Project references \u0027Microsoft.EntityFrameworkCore.Tools\u0027 10.0.0; proposed upgrade to 11.0.0.",
+          "projectPath": "ServicePulse.Infrastructure\\ServicePulse.Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.EntityFrameworkCore.Tools, 10.0.0",
+              "protected": "Microsoft.EntityFrameworkCore.Tools, 10.0.0"
+            },
+            "kind": "File",
+            "path": "ServicePulse.Infrastructure\\ServicePulse.Infrastructure.csproj",
+            "snippet": "Microsoft.EntityFrameworkCore.Tools, 10.0.0",
+            "protectedSnippet": "Microsoft.EntityFrameworkCore.Tools, 10.0.0",
+            "label": "Microsoft.EntityFrameworkCore.Tools 10.0.0",
+            "properties": {
+              "PackageId": "Microsoft.EntityFrameworkCore.Tools",
+              "PackageVersion": "10.0.0",
+              "PackageNewVersion": "11.0.0",
+              "PackageReplacements": null
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "ServicePulse.Tests\\ServicePulse.Tests.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 0,
+      "properties": {
+        "appName": "ServicePulse.Tests",
+        "projectKind": "DotNetCoreApp",
+        "frameworks": [
+          "net10.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "isTestProject": true,
+        "numberOfFiles": 3,
+        "numberOfCodeFiles": 1,
+        "linesTotal": 1805,
+        "linesOfCode": 10,
+        "totalApiScanned": 0,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "a3d7070c-0ead-42e0-83a7-223d73408e9d",
+          "ruleId": "Pkg.0001",
+          "description": "Project references \u0027coverlet.collector\u0027 6.0.4; proposed upgrade to 10.1.0.",
+          "projectPath": "ServicePulse.Tests\\ServicePulse.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "coverlet.collector, 6.0.4",
+              "protected": "coverlet.collector, 6.0.4"
+            },
+            "kind": "File",
+            "path": "ServicePulse.Tests\\ServicePulse.Tests.csproj",
+            "snippet": "coverlet.collector, 6.0.4",
+            "protectedSnippet": "coverlet.collector, 6.0.4",
+            "label": "coverlet.collector 6.0.4",
+            "properties": {
+              "PackageId": "coverlet.collector",
+              "PackageVersion": "6.0.4",
+              "PackageNewVersion": "10.1.0",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "22a3f490-ecb5-4f9c-b8cb-3e14f742cb46",
+          "ruleId": "Pkg.0001",
+          "description": "Project references \u0027Microsoft.NET.Test.Sdk\u0027 17.14.1; proposed upgrade to 18.11.1.",
+          "projectPath": "ServicePulse.Tests\\ServicePulse.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.NET.Test.Sdk, 17.14.1",
+              "protected": "Microsoft.NET.Test.Sdk, 17.14.1"
+            },
+            "kind": "File",
+            "path": "ServicePulse.Tests\\ServicePulse.Tests.csproj",
+            "snippet": "Microsoft.NET.Test.Sdk, 17.14.1",
+            "protectedSnippet": "Microsoft.NET.Test.Sdk, 17.14.1",
+            "label": "Microsoft.NET.Test.Sdk 17.14.1",
+            "properties": {
+              "PackageId": "Microsoft.NET.Test.Sdk",
+              "PackageVersion": "17.14.1",
+              "PackageNewVersion": "18.11.1",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "f060dcb0-ff41-48d9-a7c7-f5af1ba5c45b",
+          "ruleId": "Pkg.0001",
+          "description": "Project references \u0027xunit\u0027 2.9.3 (included in this upgrade).",
+          "projectPath": "ServicePulse.Tests\\ServicePulse.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "xunit, 2.9.3",
+              "protected": "xunit, 2.9.3"
+            },
+            "kind": "File",
+            "path": "ServicePulse.Tests\\ServicePulse.Tests.csproj",
+            "snippet": "xunit, 2.9.3",
+            "protectedSnippet": "xunit, 2.9.3",
+            "label": "xunit 2.9.3",
+            "properties": {
+              "PackageId": "xunit",
+              "PackageVersion": "2.9.3",
+              "PackageNewVersion": "2.9.3",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "e7de7d86-e11c-4236-842c-f0358a00e962",
+          "ruleId": "Pkg.0001",
+          "description": "Project references \u0027xunit.runner.visualstudio\u0027 3.1.4; proposed upgrade to 4.0.1.",
+          "projectPath": "ServicePulse.Tests\\ServicePulse.Tests.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "xunit.runner.visualstudio, 3.1.4",
+              "protected": "xunit.runner.visualstudio, 3.1.4"
+            },
+            "kind": "File",
+            "path": "ServicePulse.Tests\\ServicePulse.Tests.csproj",
+            "snippet": "xunit.runner.visualstudio, 3.1.4",
+            "protectedSnippet": "xunit.runner.visualstudio, 3.1.4",
+            "label": "xunit.runner.visualstudio 3.1.4",
+            "properties": {
+              "PackageId": "xunit.runner.visualstudio",
+              "PackageVersion": "3.1.4",
+              "PackageNewVersion": "4.0.1",
+              "PackageReplacements": null
+            }
+          }
+        }
+      ],
+      "features": []
+    }
+  ],
+  "rules": {
+    "Pkg.0001": {
+      "id": "Pkg.0001",
+      "isFeature": false,
+      "description": "Project references a package included in this upgrade.\n\nThe project references one of the packages being upgraded. This finding records the reference (current and proposed version) so the assessment lists every affected project even when no breaking API changes were detected.",
+      "label": "Project references an upgraded package",
+      "severity": "Information",
+      "effort": 0
+    }
+  }
+}

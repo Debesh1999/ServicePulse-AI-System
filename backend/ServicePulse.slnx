@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ServicePulse.Api/ServicePulse.Api.csproj" />
+    <Project Path="src/ServicePulse.Application/ServicePulse.Application.csproj" />
+    <Project Path="src/ServicePulse.Domain/ServicePulse.Domain.csproj" />
+    <Project Path="src/ServicePulse.Infrastructure/ServicePulse.Infrastructure.csproj" />
+    <Project Path="src/ServicePulse.Tests/ServicePulse.Tests.csproj" />
+  </Folder>
+</Solution>

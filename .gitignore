@@ -1,0 +1,44 @@
+# Database
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.db-journal
+
+# Build output
+**/bin/
+**/obj/
+**/node_modules/
+**/.next/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+/tmp/
+/temp/
+
+# Scratch
+_scratch/
+write_tests.js
+write_tests.py
+extract.py
+
+# VS Code / IDE locks
+backend/.vs/
+.vscode/
