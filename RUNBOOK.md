@@ -1,89 +1,97 @@
 # ServicePulse AI System — Runbook
 
-## 1. 环境要求
+## 1. Environment Requirements
 
-| 组件 | 版本 |
+| Component | Version |
 |---|---|
 | .NET SDK | 10.0.x |
 | Node.js | 18+ |
-| 数据库 | SQLite（自动创建，无需安装） |
+| Database | SQLite (auto-created, no installation needed) |
 
-## 2. 首次运行
+## 2. First-Time Setup
 
-### 2.1 后端
+### 2.1 Backend API
 ```bash
 cd backend/src/ServicePulse.Api
 dotnet run
 ```
-启动后访问 `http://localhost:5295/api/health`，预期返回：
+The server starts on `http://localhost:5295`. Verify with:
+```bash
+curl http://localhost:5295/api/health
+```
+Expected response:
 ```json
 {"status":"Healthy","environment":"Development","database":"Connected","timestamp":"..."}
 ```
-> 启动时会自动执行迁移并种子数据。
+On first run, EF Core migrations apply automatically and test data is seeded.
 
-### 2.2 前端
+### 2.2 Frontend
 ```bash
 cd backend/frontend/ServicePulse.Frontend/ClientApp
 npm install
 npm start
 ```
-浏览器打开 `http://localhost:3000`。
+Open `http://localhost:3000` in your browser.
 
-### 2.3 测试
+### 2.3 Unit Tests
 ```bash
 cd backend
 dotnet test src/ServicePulse.Tests/ServicePulse.Tests.csproj
 ```
-预期：`Passed! - Failed: 0, Passed: 9`
+Expected: `Passed! - Failed: 0, Passed: 9, Skipped: 0, Total: 9`
 
-## 3. 常用操作
+## 3. Common Operations
 
-### 3.1 停止服务
+### 3.1 Stop Services
 ```bash
-# 停止 API
+# Stop the API server
 taskkill //F //IM dotnet.exe
 
-# 停止前端
-# 在 npm start 窗口按 Ctrl+C
+# Stop the frontend (Ctrl+C in the npm terminal)
 ```
 
-### 3.2 重置数据库
+### 3.2 Reset the Database
 ```bash
 cd backend/src/ServicePulse.Api
-rm ServicePulseDb.sqlite
+del ServicePulseDb.sqlite
 dotnet run
 ```
-迁移会自动重新创建表并种子数据。
+This drops and recreates the database with fresh seed data.
 
-### 3.3 新增 API 端点
-1. 在 `src/ServicePulse.Api/Controllers/` 创建新 Controller
-2. 遵循 `[ApiController]` + `[Route("api/[controller]")]` 约定
-3. 重启 API 即可生效
+### 3.3 Add a New API Endpoint
+1. Create a new controller file in `src/ServicePulse.Api/Controllers/`
+2. Follow the pattern: `[ApiController]` + `[Route("api/[controller]")]`
+3. Restart `dotnet run` — changes take effect immediately
 
-### 3.4 前端修改
+### 3.4 Frontend Development
 ```bash
 cd backend/frontend/ServicePulse.Frontend/ClientApp
 npm start
 ```
-支持热重载，修改后自动刷新。
+Hot reload is enabled — save any `.js` or `.jsx` file and the browser refreshes automatically.
 
-## 4. Postman 测试
+## 4. Postman Testing Guide
 
-### 4.1 创建 Collection
-导入以下请求（URL 均为 `http://localhost:5295`）：
+### 4.1 Collection Setup
+Create a new collection called **ServicePulse API** with base URL set to:
+```
+http://localhost:5295
+```
 
-| # | 名称 | 方法 | URL | 说明 |
+### 4.2 Test Requests
+
+| # | Name | Method | Endpoint | Expected Result |
 |---|---|---|---|---|
-| 1 | Get Calls | GET | `/api/calls?page=1&pageSize=10` | 分页查询 |
-| 2 | Get Call | GET | `/api/calls/{id}` | 详情（含分析/审核） |
-| 3 | Search by Agent | GET | `/api/calls/search?agentName=Alice` | 搜索 |
-| 4 | Search by Status | GET | `/api/calls/search?status=Completed` | 状态过滤 |
-| 5 | Get Stats | GET | `/api/calls/stats` | Dashboard 统计 |
-| 6 | Create Call | POST | `/api/calls` | 创建通话 |
-| 7 | Create - Not Found | POST | `/api/calls` | agent/customer 不存在 |
-| 8 | Unknown ID | GET | `/api/calls/00000000-0000-0000-0000-000000000000` | 404 测试 |
+| 1 | Get Calls | GET | `/api/calls?page=1&pageSize=10` | Array of call objects |
+| 2 | Get Call Detail | GET | `/api/calls/{id}` | Full DTO with analysis and review |
+| 3 | Search by Agent | GET | `/api/calls/search?agentName=Alice` | Only Alice's calls |
+| 4 | Search by Status | GET | `/api/calls/search?status=Completed` | Only completed calls |
+| 5 | Get Stats | GET | `/api/calls/stats` | Dashboard JSON with counts |
+| 6 | Create Call | POST | `/api/calls` | 201 Created with call details |
+| 7 | Create - Missing Agent | POST | `/api/calls` | 400 Bad Request |
+| 8 | Unknown Call ID | GET | `/api/calls/00000000-0000-0000-0000-000000000000` | 404 Not Found |
 
-### 4.2 Create Call 请求体
+### 4.3 Create Call — Request Body
 ```json
 {
   "agentName": "Alice Johnson",
@@ -91,34 +99,65 @@ npm start
   "externalCallId": "EXT-001",
   "startedAtUtc": "2026-01-01T10:00:00Z",
   "durationSeconds": 120,
-  "transcriptText": "Hello this is a test call"
+  "transcriptText": "Hello, this is a test call transcript."
 }
 ```
+Headers: `Content-Type: application/json`
 
-## 5. 故障排查
+## 5. Troubleshooting
 
-| 症状 | 可能原因 | 解决 |
+| Symptom | Cause | Fix |
 |---|---|---|
-| 端口 5295 被占用 | 旧进程未退出 | `taskkill //F //IM dotnet.exe` |
-| 前端白屏 | npm 依赖未安装 | `npm install` |
-| SQLite 锁定 | 多进程同时写入 | 关闭所有 dotnet 进程后重启 |
-| 测试失败 | DLL 被占用 | `taskkill //F //IM dotnet.exe` 后重新构建 |
-| 404 on /api/health | HealthController 未创建 | 确认文件存在：`src/ServicePulse.Api/Controllers/HealthController.cs` |
+| Port 5295 already in use | Old API process still running | Run `taskkill //F //IM dotnet.exe`, then restart |
+| Frontend shows blank page | Dependencies missing | Run `npm install` in the ClientApp folder |
+| SQLite locked error | Multiple processes writing simultaneously | Close all `dotnet run` instances, delete `.sqlite-wal`, restart |
+| Unit tests fail after build | DLL locked by running API | Kill dotnet processes, then rebuild |
+| `/api/health` returns 404 | HealthController not registered | Verify file exists at `src/ServicePulse.Api/Controllers/HealthController.cs` and rebuild |
 
-## 6. 项目结构
+## 6. Project Structure
 
 ```
 ServicePulse_AI_System/
 ├── backend/
 │   ├── src/
-│   │   ├── ServicePulse.Domain/       # 实体、枚举
-│   │   ├── ServicePulse.Application/  # DTO、请求
-│   │   ├── ServicePulse.Infrastructure/  # EF Core、迁移
-│   │   ├── ServicePulse.Api/         # Controllers、Middleware
-│   │   └── ServicePulse.Tests/       # xUnit 单元测试
+│   │   ├── ServicePulse.Domain/          # Entities, enums, domain rules
+│   │   ├── ServicePulse.Application/     # DTOs, request models
+│   │   ├── ServicePulse.Infrastructure/  # EF Core, migrations, seeding
+│   │   ├── ServicePulse.Api/             # Controllers, middleware, Program.cs
+│   │   └── ServicePulse.Tests/           # xUnit unit tests
 │   └── frontend/
-│       └── ServicePulse.Frontend/    # React + Reactstrap
-├── database/                          # 种子数据 SQL
-├── docs/                              # 架构文档
-└── README.md
+│       └── ServicePulse.Frontend/        # React + Reactstrap SPA
+├── database/                             # Seed SQL scripts
+├── docs/                                 # Architecture documentation
+├── README.md                             # Project overview
+└── RUNBOOK.md                            # This file
+```
+
+## 7. V1 Feature Checklist
+
+- [x] Calls CRUD endpoints (GetCalls, GetCall, SearchCalls, GetStats, CreateCall)
+- [x] Pagination and search/filter (by agent name, customer name, status, date range)
+- [x] Analysis results display (sentiment, risk level, quality score, keywords)
+- [x] Manager review display (reviewer name, score, coaching notes)
+- [x] Dashboard statistics endpoint
+- [x] Health check endpoint (`GET /api/health`)
+- [x] Global exception handling middleware
+- [x] Input validation (required fields, range checks, max length)
+- [x] Unit tests (9/9 passing)
+- [x] Frontend pager component
+- [x] Postman API verification complete
+
+## 8. Deploying to GitHub
+
+```bash
+# Check current state
+git log --oneline -3
+git remote -v
+
+# Add remote (replace with your repo URL)
+git remote add origin https://github.com/YOUR_USERNAME/ServicePulse-AI-System.git
+
+# Push
+git branch -M main
+git push -u origin main
 ```
