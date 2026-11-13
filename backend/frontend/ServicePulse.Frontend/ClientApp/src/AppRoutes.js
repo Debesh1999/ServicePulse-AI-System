@@ -4,36 +4,63 @@ import { CallsListPage } from "./components/CallsListPage";
 import { AddCallPage } from "./components/AddCallPage";
 import { CallDetailPage } from "./components/CallDetailPage";
 import { DashboardPage } from "./components/DashboardPage";
+import { LoginPage } from "./components/LoginPage";
+import { RegisterPage } from "./components/RegisterPage";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 const AppRoutes = [
   {
     index: true,
-    element: <DashboardPage />
+    element: <DashboardPage />,
+  },
+  {
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
+    path: '/register',
+    element: <RegisterPage />,
   },
   {
     path: '/dashboard',
-    element: <DashboardPage />
+    element: (
+      <ProtectedRoute>
+        <DashboardPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/calls',
-    element: <CallsListPage />
+    element: (
+      <ProtectedRoute>
+        <CallsListPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/calls/add',
-    element: <AddCallPage />
+    element: (
+      <ProtectedRoute>
+        <AddCallPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/calls/:id',
-    element: <CallDetailPage />
+    element: (
+      <ProtectedRoute>
+        <CallDetailPage />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/counter',
-    element: <Counter />
+    element: <Counter />,
   },
   {
     path: '/fetch-data',
-    element: <FetchData />
-  }
+    element: <FetchData />,
+  },
 ];
 
 export default AppRoutes;

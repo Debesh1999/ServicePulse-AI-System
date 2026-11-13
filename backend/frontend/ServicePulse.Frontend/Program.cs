@@ -1,22 +1,96 @@
+using System.Net;
+using System.Text;
+using System.Text.Json;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// API backend the React SPA talks to (relative /api/* requests are proxied here)
+var apiBaseUrl = (Environment.GetEnvironmentVariable("API_BASE_URL") ?? "http://localhost:5295").TrimEnd('/');
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+// Proxy MUST come before UseStaticFiles and UseHttpsRedirection so /api/*
+// requests are forwarded directly to the backend without redirecting.
+app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase),
+    subApp =>
+    {
+        subApp.Run(async context =>
+        {
+            var queryString = context.Request.QueryString.HasValue
+                ? context.Request.QueryString.ToUriComponent()
+                : string.Empty;
+            var targetUrl = apiBaseUrl + context.Request.Path + queryString;
+            using var httpClient = new HttpClient();
+            var requestMessage = new HttpRequestMessage(new HttpMethod(context.Request.Method), targetUrl);
+
+            // Copy request headers — skip hop-by-hop headers HttpClient manages itself.
+            foreach (var header in context.Request.Headers)
+            {
+                if (header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase)
+                    || header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase))
+                    continue;
+                requestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
+            }
+
+            byte[]? bodyBytes = null;
+            if (context.Request.ContentLength > 0 || context.Request.HasFormContentType)
+            {
+                bodyBytes = await ReadBodyAsync(context.Request.Body);
+                requestMessage.Content = new ByteArrayContent(bodyBytes);
+
+                // Propagate Content-Type from the incoming request to the request body
+                if (context.Request.ContentType != null)
+                {
+                    requestMessage.Content.Headers.ContentType =
+                        System.Net.Http.Headers.MediaTypeHeaderValue.Parse(context.Request.ContentType);
+                }
+
+                foreach (var header in context.Request.Headers)
+                {
+                    if (header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase)
+                        || header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase)
+                        || header.Key.Equals("Content-Length", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    requestMessage.Content.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
+                }
+            }
+
+            try
+            {
+                using var response = await httpClient.SendAsync(requestMessage, context.RequestAborted);
+                context.Response.StatusCode = (int)response.StatusCode;
+                foreach (var header in response.Headers)
+                {
+                    if (header.Key.Equals("Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    context.Response.Headers.Append(header.Key, header.Value.ToArray());
+                }
+                foreach (var header in response.Content.Headers)
+                {
+                    context.Response.Headers.Append(header.Key, header.Value.ToArray());
+                }
+                await response.Content.CopyToAsync(context.Response.Body);
+            }
+            catch (Exception ex)
+            {
+                context.Response.StatusCode = (int)HttpStatusCode.BadGateway;
+                await context.Response.WriteAsync(
+                    JsonSerializer.Serialize(new { message = "API proxy error: " + ex.Message }), Encoding.UTF8);
+            }
+        });
+    });
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
-
 
 app.MapControllerRoute(
     name: "default",
@@ -25,3 +99,11 @@ app.MapControllerRoute(
 app.MapFallbackToFile("index.html");
 
 app.Run();
+
+static async Task<byte[]> ReadBodyAsync(Stream body)
+{
+    using var ms = new MemoryStream();
+    await body.CopyToAsync(ms);
+    ms.Position = 0;
+    return ms.ToArray();
+}

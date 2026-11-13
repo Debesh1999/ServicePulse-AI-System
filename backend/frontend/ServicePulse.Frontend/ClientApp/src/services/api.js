@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { authService } from './authService';
 
 // Use relative URL - the React dev server proxy will forward /api requests to the backend
 const api = axios.create({
@@ -7,6 +8,31 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// Attach the JWT bearer token to every request and redirect to login on 401
+api.interceptors.request.use(
+  (config) => {
+    const token = authService.getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      authService.clear();
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 export const callsApi = {
   getAll: () => api.get('/api/calls'),
