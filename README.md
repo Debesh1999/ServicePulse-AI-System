@@ -1,58 +1,76 @@
 # ServicePulse AI System
 
-全栈客服质检系统，展示 Clean Architecture + React + SQLite 完整技术栈。
+Full-stack customer service quality inspection system demonstrating Clean Architecture + React + SQLite + JWT Auth.
 
-## 架构分层
+## Architecture Layers
 
-| 层 | 职责 | 路径 |
+| Layer | Responsibility | Path |
 |---|---|---|
-| Domain | 实体、枚举、领域规则 | `src/ServicePulse.Domain` |
-| Application | DTO、请求、通用服务 | `src/ServicePulse.Application` |
-| Infrastructure | EF Core、迁移、数据种子 | `src/ServicePulse.Infrastructure` |
-| Api | HTTP 端点、中间件 | `src/ServicePulse.Api` |
-| Frontend | React + Reactstrap | `frontend/ServicePulse.Frontend` |
+| Domain | Entities, enums, domain rules | `src/ServicePulse.Domain` |
+| Application | DTOs, requests, shared services | `src/ServicePulse.Application` |
+| Infrastructure | EF Core, migrations, data seeding | `src/ServicePulse.Infrastructure` |
+| Api | HTTP endpoints, middleware | `src/ServicePulse.Api` |
+| Frontend | React 18 + Reactstrap SPA | `frontend/ServicePulse.Frontend` |
 
-## API 端点
+## API Endpoints
 
-- `GET /api/calls?page=&pageSize=` — 分页查询通话列表
-- `GET /api/calls/{id}` — 通话详情（含分析结果、经理审核）
-- `GET /api/calls/search?agentName=&customerName=&status=&from=&to=` — 搜索过滤
-- `GET /api/calls/stats` — 仪表盘统计
-- `POST /api/calls` — 创建新通话
-- `GET /api/health` — 健康检查（含数据库连通性）
+- `GET /api/calls?page=&pageSize=` — Paginated call list
+- `GET /api/calls/{id}` — Call detail (with analysis results and manager review)
+- `GET /api/calls/search?agentName=&customerName=&status=&from=&to=` — Search and filter
+- `GET /api/calls/stats` — Dashboard statistics
+- `POST /api/calls` — Create new call
+- `GET /api/health` — Health check (includes database connectivity)
+- `POST /api/auth/register` — Register new user
+- `POST /api/auth/login` — Login and receive JWT token
+- `GET /api/auth/me` — Get current user info
 
-## 运行步骤
+## Running the Application
 
-### 后端
+### Backend
 ```bash
 cd backend/src/ServicePulse.Api
-dotnet run
-# 启动后访问 http://localhost:5295/api/health
+dotnet run --no-launch-settings
+# Access http://localhost:5295/api/health
 ```
 
-### 前端
+### Frontend (combined with backend proxy)
 ```bash
-cd backend/frontend/ServicePulse.Frontend/ClientApp
-npm install
-npm start
-# 浏览器打开 http://localhost:3000
+cd backend/frontend/ServicePulse.Frontend
+npm install  # if not already done
+npm run build  # builds React to wwwroot
+dotnet run --no-launch-settings
+# Access http://localhost:5212/
 ```
 
-### 测试
+### Tests
 ```bash
 cd backend
 dotnet test src/ServicePulse.Tests/ServicePulse.Tests.csproj
 ```
 
-## V1 完成清单
+## Default Credentials
 
-- [x] Calls CRUD 端点（5 个）
-- [x] 搜索与分页
-- [x] 分析结果与经理审核展示
-- [x] Dashboard 统计
-- [x] 健康检查端点
-- [x] 全局异常处理中间件
-- [x] 输入验证（Required、Range、MaxLength）
-- [x] 单元测试（9/9 通过）
-- [x] 前端 Pager 组件
-- [x] Postman 接口验证
+| Email | Password | Role |
+|---|---|---|
+| admin@servicepulse.local | Admin@123 | Admin |
+| priya.sharma@servicepulse.local | Priya@123 | Agent |
+| alice.johnson@servicepulse.local | Alice@123 | Agent |
+
+## V2 Feature Checklist
+
+- [x] Calls CRUD endpoints (5)
+- [x] Search with pagination
+- [x] Analysis results and manager review display
+- [x] Dashboard statistics
+- [x] Health check endpoint
+- [x] Global exception handling middleware
+- [x] Input validation (Required, Range, MaxLength)
+- [x] Unit tests (17/17 passing)
+- [x] Frontend Pager component
+- [x] JWT Authentication
+- [x] User registration and login
+- [x] Role-based authorization
+- [x] React SPA with login/register pages
+- [x] Protected routes
+- [x] Reverse proxy for API requests
+- [x] Postman interface verification

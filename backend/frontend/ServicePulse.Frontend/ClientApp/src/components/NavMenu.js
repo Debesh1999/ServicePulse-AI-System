@@ -7,6 +7,7 @@ import './NavMenu.css';
 export function NavMenu() {
   const [collapsed, setCollapsed] = useState(true);
   const [user, setUser] = useState(authService.getUser());
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     const onStorage = (e) => {
@@ -19,6 +20,7 @@ export function NavMenu() {
   }, []);
 
   const toggleNavbar = () => setCollapsed((c) => !c);
+  const toggleDropdown = () => setDropdownOpen((o) => !o);
 
   const handleLogout = () => {
     authService.clear();
@@ -46,24 +48,24 @@ export function NavMenu() {
                 </NavItem>
               </>
             )}
-            <NavItem className="ms-auto">
-              <Dropdown>
-                <DropdownToggle nav caret>
-                  {user ? user.displayName : 'Account'}
-                </DropdownToggle>
-                <DropdownMenu>
-                  {user ? (
-                    <>
-                      <DropdownItem disabled>Signed in as {user.role}</DropdownItem>
-                      <DropdownItem divider />
-                      <DropdownItem onClick={handleLogout}>Logout</DropdownItem>
-                    </>
-                  ) : (
-                    <DropdownItem tag={Link} to="/login">Login</DropdownItem>
-                  )}
-                </DropdownMenu>
-              </Dropdown>
-            </NavItem>
+          </ul>
+          <ul className="navbar-nav ml-auto">
+            <Dropdown isOpen={dropdownOpen} toggle={toggleDropdown}>
+              <DropdownToggle nav caret style={{ cursor: 'pointer' }}>
+                {user ? user.displayName : 'Account'}
+              </DropdownToggle>
+              <DropdownMenu>
+                {user ? (
+                  <>
+                    <DropdownItem disabled>Signed in as {user.role}</DropdownItem>
+                    <DropdownItem divider />
+                    <DropdownItem onClick={handleLogout}>Logout</DropdownItem>
+                  </>
+                ) : (
+                  <DropdownItem tag={Link} to="/login">Login</DropdownItem>
+                )}
+              </DropdownMenu>
+            </Dropdown>
           </ul>
         </Collapse>
       </Navbar>

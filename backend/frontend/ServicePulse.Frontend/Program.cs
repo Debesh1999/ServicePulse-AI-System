@@ -12,12 +12,9 @@ builder.Services.AddMemoryCache();
 
 var app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHsts();
-}
+// No UseHttpsRedirection — we run locally over HTTP only.
 
-// Proxy MUST come before UseStaticFiles and UseHttpsRedirection so /api/*
+// Proxy MUST come before UseStaticFiles so /api/*
 // requests are forwarded directly to the backend without redirecting.
 app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase),
     subApp =>
@@ -31,7 +28,6 @@ app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/api", StringComparison.
             using var httpClient = new HttpClient();
             var requestMessage = new HttpRequestMessage(new HttpMethod(context.Request.Method), targetUrl);
 
-            // Copy request headers — skip hop-by-hop headers HttpClient manages itself.
             foreach (var header in context.Request.Headers)
             {
                 if (header.Key.Equals("Host", StringComparison.OrdinalIgnoreCase)
@@ -46,7 +42,6 @@ app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/api", StringComparison.
                 bodyBytes = await ReadBodyAsync(context.Request.Body);
                 requestMessage.Content = new ByteArrayContent(bodyBytes);
 
-                // Propagate Content-Type from the incoming request to the request body
                 if (context.Request.ContentType != null)
                 {
                     requestMessage.Content.Headers.ContentType =
@@ -88,7 +83,6 @@ app.MapWhen(ctx => ctx.Request.Path.StartsWithSegments("/api", StringComparison.
         });
     });
 
-app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
 
