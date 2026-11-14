@@ -87,6 +87,17 @@ namespace ServicePulse.Infrastructure.Migrations
                         .HasMaxLength(1500)
                         .HasColumnType("nvarchar(1500)");
 
+                    b.Property<string>("FallbackReason")
+                        .HasMaxLength(1500)
+                        .HasColumnType("nvarchar(1500)");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)")
+                        .HasDefaultValue("RuleBased");
+
                     b.Property<decimal>("QualityScore")
                         .HasColumnType("decimal(5,2)");
 

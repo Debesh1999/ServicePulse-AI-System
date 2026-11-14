@@ -38,7 +38,9 @@ public record AnalysisResultDto(
     string? Summary,
     List<string> DetectedKeywords,
     string AnalysisStatus,
-    string? ErrorMessage
+    string? ErrorMessage,
+    string Provider = "RuleBased",
+    string? FallbackReason = null
 );
 
 public record ManagerReviewDto(

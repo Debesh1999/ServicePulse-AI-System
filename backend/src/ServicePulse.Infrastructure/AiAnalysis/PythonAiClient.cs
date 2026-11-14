@@ -16,28 +16,32 @@ public sealed class PythonAiClient : IAiAnalyzerService
 {
     private readonly HttpClient _http;
     private readonly ILogger<PythonAiClient> _logger;
+    private readonly TimeSpan _timeout = TimeSpan.FromSeconds(30);
 
     public PythonAiClient(HttpClient http, ILogger<PythonAiClient> logger)
     {
         _http = http;
         _logger = logger;
+        _http.Timeout = _timeout;
     }
 
     public async Task<AiAnalysisResult> AnalyzeAsync(string transcriptText, string language = "en")
     {
         var payload = new { text = transcriptText, language };
-        var response = await _http.PostAsJsonAsync("/analyze", payload);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            var errorContent = await response.Content.ReadAsStringAsync();
-            _logger.LogWarning("AI analysis call failed with status {StatusCode}: {Body}", response.StatusCode, errorContent);
-            return FailedResult(Guid.NewGuid(), $"Analysis service unavailable ({response.StatusCode})", response.StatusCode.ToString());
-        }
+        var cts = new CancellationTokenSource(_timeout);
 
         try
         {
-            var result = await response.Content.ReadFromJsonAsync<AnalyzeResponse>();
+            var response = await _http.PostAsJsonAsync("/analyze", payload, cts.Token);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cts.Token);
+                _logger.LogWarning("AI analysis call failed with status {StatusCode}: {Body}", response.StatusCode, errorContent);
+                return FailedResult(Guid.NewGuid(), $"Analysis service unavailable ({response.StatusCode})", response.StatusCode.ToString(), "TimeoutOrHttpError");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<AnalyzeResponse>(cancellationToken: cts.Token);
             if (result == null)
                 throw new InvalidOperationException("Empty AI response body");
 
@@ -54,17 +58,29 @@ public sealed class PythonAiClient : IAiAnalyzerService
                 result.Keywords ?? [],
                 result.AnalyzerVersion ?? "unknown",
                 result.AnalysisStatus ?? "Succeeded",
-                result.ErrorMessage);
+                result.ErrorMessage,
+                result.Provider ?? "Unknown",
+                result.FallbackReason);
+        }
+        catch (OperationCanceledException ex) when (ex.CancellationToken == cts.Token)
+        {
+            _logger.LogWarning("AI analysis timed out after {Timeout} seconds", _timeout.TotalSeconds);
+            return FailedResult(Guid.NewGuid(), "AI analysis timed out", "Timeout", "Timeout");
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogWarning(ex, "AI analysis HTTP request failed");
+            return FailedResult(Guid.NewGuid(), "AI service connection failed", "ConnectionError", "ConnectionError");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to parse AI response");
-            return FailedResult(Guid.NewGuid(), ex.Message);
+            return FailedResult(Guid.NewGuid(), ex.Message, "ParseError", "ParseError");
         }
     }
 
-    private static AiAnalysisResult FailedResult(Guid id, string message, string status = "Failed") =>
-        new(id, "Unknown", "Unknown", 0, string.Empty, [], "unknown", status, message);
+    private static AiAnalysisResult FailedResult(Guid id, string message, string status = "Failed", string? fallbackReason = null) =>
+        new(id, "Unknown", "Unknown", 0, string.Empty, [], "unknown", status, message, "RuleBased", fallbackReason);
 
     internal sealed class AnalyzeResponse
     {
@@ -100,5 +116,8 @@ public sealed class PythonAiClient : IAiAnalyzerService
 
         [JsonPropertyName("confidence")]
         public double? Confidence { get; set; }
+
+        [JsonPropertyName("fallback_reason")]
+        public string? FallbackReason { get; set; }
     }
 }

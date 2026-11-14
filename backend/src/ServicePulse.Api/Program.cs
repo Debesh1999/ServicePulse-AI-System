@@ -17,6 +17,8 @@ builder.Services.AddControllers(options =>
     options.ReturnHttpNotAcceptable = true;
 });
 
+builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddDbContext<ServicePulseDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 

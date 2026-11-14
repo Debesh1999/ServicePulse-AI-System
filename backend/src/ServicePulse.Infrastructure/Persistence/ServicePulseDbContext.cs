@@ -99,6 +99,8 @@ public class ServicePulseDbContext : DbContext
             entity.Property(e => e.QualityScore).HasColumnType("decimal(5,2)");
             entity.Property(e => e.AnalysisStatus).HasMaxLength(20).IsRequired();
             entity.Property(e => e.ErrorMessage).HasMaxLength(1500);
+            entity.Property(e => e.Provider).HasMaxLength(30).IsRequired().HasDefaultValue("RuleBased");
+            entity.Property(e => e.FallbackReason).HasMaxLength(1500);
             entity.HasIndex(e => e.CallId);
             entity.HasOne(e => e.Call).WithMany(c => c.AnalysisResults).HasForeignKey(e => e.CallId);
         });

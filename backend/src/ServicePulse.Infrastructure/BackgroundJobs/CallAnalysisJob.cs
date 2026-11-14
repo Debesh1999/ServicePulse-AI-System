@@ -59,7 +59,7 @@ public static class CallAnalysisJob
             // Run AI analysis
             var aiResult = await aiService.AnalyzeAsync(transcript.Text, transcript.LanguageCode);
 
-            // Save analysis result
+            // Save analysis result with provider and fallback info
             var analysis = new AnalysisResult
             {
                 Id = aiResult.Id,
@@ -72,21 +72,67 @@ public static class CallAnalysisJob
                 DetectedKeywordsJson = System.Text.Json.JsonSerializer.Serialize(aiResult.Keywords),
                 AnalysisStatus = aiResult.AnalysisStatus,
                 ErrorMessage = aiResult.ErrorMessage,
+                Provider = aiResult.Provider,
+                FallbackReason = aiResult.FallbackReason,
                 CreatedAtUtc = DateTime.UtcNow
             };
 
             context.AnalysisResults.Add(analysis);
+
+            // Write audit log for AI analysis completion with correlation ID
+            var correlationId = Guid.NewGuid();
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                EntityName = "AnalysisResult",
+                EntityId = analysis.Id,
+                Action = "Created",
+                ActorUserId = null, // Background job
+                CorrelationId = correlationId,
+                DetailsJson = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    callId = callId,
+                    provider = aiResult.Provider,
+                    fallbackReason = aiResult.FallbackReason,
+                    qualityScore = aiResult.QualityScore,
+                    sentiment = aiResult.Sentiment,
+                    riskLevel = aiResult.RiskLevel,
+                    analyzerVersion = aiResult.AnalyzerVersion
+                }),
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            context.AuditLogs.Add(auditLog);
 
             // Update call status
             call.Status = aiResult.AnalysisStatus == "Succeeded" ? "Completed" : "Failed";
 
             await context.SaveChangesAsync();
 
-            logger.LogInformation("AI analysis completed for call {CallId}: {Status}", callId, aiResult.AnalysisStatus);
+            logger.LogInformation("AI analysis completed for call {CallId}: {Status}, Provider={Provider}, FallbackReason={FallbackReason}",
+                callId, aiResult.AnalysisStatus, aiResult.Provider, aiResult.FallbackReason ?? "none");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to process AI analysis for call {CallId}", callId);
+
+            // Write audit log for failure
+            var correlationId = Guid.NewGuid();
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                EntityName = "AnalysisResult",
+                EntityId = Guid.Empty,
+                Action = "Failed",
+                ActorUserId = null,
+                CorrelationId = correlationId,
+                DetailsJson = System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    callId = callId,
+                    error = ex.Message
+                }),
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            context.AuditLogs.Add(auditLog);
 
             // Update call status to Failed
             var call = await context.Calls.FindAsync(callId);

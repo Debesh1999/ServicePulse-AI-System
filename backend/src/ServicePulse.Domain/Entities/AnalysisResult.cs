@@ -37,6 +37,13 @@ public class AnalysisResult
     [MaxLength(1500)]
     public string? ErrorMessage { get; set; }
 
+    [Required]
+    [MaxLength(30)]
+    public string Provider { get; set; } = "RuleBased";
+
+    [MaxLength(1500)]
+    public string? FallbackReason { get; set; }
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
     // Explicit FK for EF Core

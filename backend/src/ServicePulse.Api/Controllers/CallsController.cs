@@ -84,7 +84,9 @@ public class CallsController : ControllerBase
                 analysis.Summary,
                 ParseKeywords(analysis.DetectedKeywordsJson),
                 analysis.AnalysisStatus,
-                analysis.ErrorMessage
+                analysis.ErrorMessage,
+                analysis.Provider,
+                analysis.FallbackReason
             );
 
         var reviewDto = review == null

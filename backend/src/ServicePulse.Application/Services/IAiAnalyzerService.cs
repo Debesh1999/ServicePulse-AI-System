@@ -9,7 +9,9 @@ public record AiAnalysisResult(
     List<string> Keywords,
     string AnalyzerVersion,
     string AnalysisStatus,
-    string? ErrorMessage
+    string? ErrorMessage,
+    string Provider = "RuleBased",
+    string? FallbackReason = null
 );
 
 public interface IAiAnalyzerService

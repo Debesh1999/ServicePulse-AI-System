@@ -222,6 +222,8 @@ public class CallsControllerTests
             DetectedKeywordsJson = "[\"billing\",\"refund\"]",
             AnalysisStatus = "Succeeded",
             ErrorMessage = null,
+            Provider = "RuleBased",
+            FallbackReason = null,
             CreatedAtUtc = DateTime.Parse("2026-01-01T11:00:00Z")
         });
 
