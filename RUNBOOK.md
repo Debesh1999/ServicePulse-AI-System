@@ -6,220 +6,268 @@
 |---|---|
 | .NET SDK | 10.0.x |
 | Node.js | 18+ |
-| Database | SQLite (auto-created, no installation needed) |
+| Docker | 24+ (for containerized deployment) |
+| Database | SQL Server 2022 (LocalDB for dev, Docker for prod) |
+
+---
 
 ## 2. First-Time Setup
 
-### 2.1 Backend API
+### 2.1 Docker Deployment (Recommended)
+```bash
+# Clone and enter directory
+cd ServicePulse_AI_System
+
+# Copy environment template
+cp .env.example .env
+
+# Start all services (database, AI service, API)
+docker-compose up -d
+
+# Check logs
+docker-compose logs -f api
+
+# Health check
+curl http://localhost:8080/api/health
+```
+**Access the app:** http://localhost:8080
+
+### 2.2 Local Development (Backend + Frontend)
+
+**Backend API (SQL Server LocalDB):**
 ```bash
 cd backend/src/ServicePulse.Api
-dotnet run
+dotnet run --no-launch-settings
+# Access http://localhost:5295/api/health
 ```
-The server starts on `http://localhost:5295`. Verify with:
-```bash
-curl http://localhost:5295/api/health
-```
-Expected response:
-```json
-{"status":"Healthy","environment":"Development","database":"Connected","timestamp":"..."}
-```
-On first run, EF Core migrations apply automatically and test data is seeded.
 
-### 2.2 Frontend
+**Frontend (Vite + React):**
 ```bash
-cd backend/frontend/ServicePulse.Frontend/ClientApp
+cd backend/frontend/ServicePulse.Frontend.Vite
 npm install
-npm start
+npm run dev
+# Access http://localhost:5173 (proxies /api to backend)
 ```
-Open `http://localhost:3000` in your browser.
 
-### 2.3 Unit Tests
+### 2.3 Unit & Integration Tests
 ```bash
 cd backend
 dotnet test src/ServicePulse.Tests/ServicePulse.Tests.csproj
 ```
-Expected: `Passed! - Failed: 0, Passed: 18, Skipped: 0, Total: 18`
+Expected: `Passed! - Failed: 0, Passed: 23, Skipped: 0, Total: 23`
 
-## 3. Common Operations
+---
 
-### 3.1 Stop Services
-```bash
-# Stop the API server
-taskkill //F //IM dotnet.exe
+## 3. Docker Operations
 
-# Stop the frontend (Ctrl+C in the npm terminal)
+| Command | Description |
+|---|---|
+| `docker-compose up -d` | Start all services in background |
+| `docker-compose down` | Stop and remove containers |
+| `docker-compose logs -f api` | Follow API logs |
+| `docker-compose logs -f ai-service` | Follow AI service logs |
+| `docker-compose exec db /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'ServicePulse@2026!'` | Connect to SQL Server |
+| `docker-compose build --no-cache` | Rebuild all images |
+
+---
+
+## 4. Default Credentials
+
+| Email | Password | Role | Access |
+|---|---|---|---|
+| `admin@servicepulse.local` | `Admin@123` | Admin | All calls, all features |
+| `priya.sharma@servicepulse.local` | `Priya@123` | Manager | All calls, can review/coach |
+| `alice.johnson@servicepulse.local` | `Alice@123` | Agent | Own calls only |
+
+---
+
+## 5. API Endpoints
+
+### Authentication
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/auth/register` | POST | No | Register new user |
+| `/api/auth/login` | POST | No | Login, get JWT token |
+| `/api/auth/me` | GET | Yes | Get current user |
+
+### Calls
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/calls` | GET | Yes | Paginated list (role-filtered) |
+| `/api/calls/{id}` | GET | Yes | Call detail with analysis & review |
+| `/api/calls/search` | GET | Yes | Filter by agent, customer, status, date |
+| `/api/calls/stats` | GET | Yes | Dashboard statistics |
+| `/api/calls` | POST | Yes | Create new call |
+
+### Manager Reviews
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/manager-reviews/{callId}` | GET | Manager/Admin | Get review for call |
+| `/api/manager-reviews` | POST | Manager/Admin | Create/edit review |
+
+### Utility
+| Endpoint | Method | Auth | Description |
+|---|---|---|---|
+| `/api/health` | GET | No | Health + DB connectivity check |
+| `/api/lookup/agents` | GET | Yes | Agent dropdown data |
+| `/api/lookup/customers` | GET | Yes | Customer dropdown data |
+
+---
+
+## 6. Postman Testing Guide
+
+### 6.1 Collection Setup
+Create collection **ServicePulse API** with base URL:
+- Docker: `http://localhost:8080`
+- Local: `http://localhost:5295`
+
+### 6.2 Auth Flow
+1. **Register:** `POST /api/auth/register` with `{email, password, displayName, role}`
+2. **Login:** `POST /api/auth/login` → returns `accessToken`
+3. **Use token:** Add header `Authorization: Bearer <accessToken>` to all protected requests
+
+### 6.3 Key Test Requests
+| # | Name | Method | Endpoint | Notes |
+|---|---|---|---|---|
+| 1 | Health Check | GET | `/api/health` | No auth required |
+| 2 | Get Calls (Agent) | GET | `/api/calls?page=1&pageSize=10` | As Alice - shows only her calls |
+| 3 | Get Calls (Manager) | GET | `/api/calls?page=1&pageSize=10` | As Priya - shows all 15 calls |
+| 4 | Search | GET | `/api/calls/search?status=Escalated` | Filter by status |
+| 5 | Get Call Detail | GET | `/api/calls/{id}` | Includes transcript, analysis, review |
+| 6 | Get Stats | GET | `/api/calls/stats` | Dashboard metrics |
+| 7 | Create Review | POST | `/api/manager-reviews` | Manager/Admin only |
+
+---
+
+## 7. Quality Score Formula
+
+```
+Base Score:        50 points
++ Greeting:        10 points (detects "hello", "hi", "good morning/afternoon/evening")
++ Resolution:      20 points (detects "resolved", "fixed", "all set", "taken care of")
++ Apology:         10 points (detects "sorry", "apologize", "regret")
++ Next Step:       15 points (detects "will", "going to", "follow up", "next steps")
+- Refund:          10 points (detects "refund", "chargeback", "money back")
+- Frustrated:      15 points (detects "frustrated", "disappointed", "unacceptable")
+- Escalation:      20 points (detects "supervisor", "manager", "escalate", "speak to someone")
+
+Final Score: Clamped to 0–100
 ```
 
-### 3.2 Reset the Database
+---
+
+## 8. Common Operations
+
+### 8.1 Stop Services
+```bash
+# Docker
+docker-compose down
+
+# Local dev
+taskkill //F //IM dotnet.exe
+# Ctrl+C in npm terminal
+```
+
+### 8.2 Reset Database (Docker)
+```bash
+docker-compose down -v  # Removes volumes
+docker-compose up -d
+```
+
+### 8.3 Reset Database (LocalDB)
 ```bash
 cd backend/src/ServicePulse.Api
-del ServicePulseDb.sqlite
-dotnet run
+# Drop and recreate via SQL:
+# DROP DATABASE ServicePulseDb; CREATE DATABASE ServicePulseDb;
+# Then run migrations on next dotnet run
 ```
-This drops and recreates the database with fresh seed data.
 
-### 3.3 Add a New API Endpoint
-1. Create a new controller file in `src/ServicePulse.Api/Controllers/`
-2. Follow the pattern: `[ApiController]` + `[Route("api/[controller]")]`
-3. Restart `dotnet run` — changes take effect immediately
-
-### 3.4 Frontend Development
+### 8.4 View Seed Data
 ```bash
-cd backend/frontend/ServicePulse.Frontend/ClientApp
-npm start
-```
-Hot reload is enabled — save any `.js` or `.jsx` file and the browser refreshes automatically.
+# Docker
+docker-compose exec db /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'ServicePulse@2026!' -Q "USE ServicePulseDb; SELECT * FROM Calls;"
 
-## 4. Postman Testing Guide
-
-### 4.1 Collection Setup
-Create a new collection called **ServicePulse API** with base URL set to:
-```
-http://localhost:5295
+# LocalDB
+sqlcmd -S "(localdb)\mssqllocaldb" -d ServicePulseDb -Q "SELECT * FROM Calls;"
 ```
 
-### 4.2 Test Requests
+---
 
-| # | Name | Method | Endpoint | Expected Result |
-|---|---|---|---|---|
-| 1 | Get Calls | GET | `/api/calls?page=1&pageSize=10` | Array of call objects |
-| 2 | Get Call Detail | GET | `/api/calls/{id}` | Full DTO with analysis and review |
-| 3 | Search by Agent | GET | `/api/calls/search?agentName=Alice` | Only Alice's calls |
-| 4 | Search by Status | GET | `/api/calls/search?status=Completed` | Only completed calls |
-| 5 | Get Stats | GET | `/api/calls/stats` | Dashboard JSON with counts |
-| 6 | Create Call | POST | `/api/calls` | 201 Created with call details |
-| 7 | Create - Missing Agent | POST | `/api/calls` | 400 Bad Request |
-| 8 | Unknown Call ID | GET | `/api/calls/00000000-0000-0000-0000-000000000000` | 404 Not Found |
-
-### 4.3 Auth Endpoints (v2)
-
-**Register a new user:**
-```
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "email": "newuser@example.com",
-  "password": "Secure@123",
-  "displayName": "New User",
-  "role": "Agent"
-}
-```
-Response: 201 Created — `TokenResponse { accessToken, tokenType, expiresIn, user }`
-
-**Login:**
-```
-POST /api/auth/login
-Content-Type: application/json
-
-{
-  "email": "admin@servicepulse.local",
-  "password": "Admin@123"
-}
-```
-Response: 200 OK — JWT access token
-
-**Get current user:**
-```
-GET /api/auth/me
-Authorization: Bearer <token-from-login>
-```
-Response: 200 OK — `{ id, email, displayName, role }`
-
-**Default credentials (seeded on first run):**
-| Email | Password | Role |
-|---|---|---|
-| admin@servicepulse.local | Admin@123 | Admin |
-| priya.sharma@servicepulse.local | Priya@123 | Manager |
-| alice.johnson@servicepulse.local | Alice@123 | Agent |
-
-### 4.4 Create Call — Request Body (requires auth token in Header)
-```http
-Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
-Content-Type: application/json
-
-{
-  "agentName": "Alice Johnson",
-  "customerName": "Sarah O'Brien",
-  "externalCallId": "EXT-001",
-  "startedAtUtc": "2026-01-01T10:00:00Z",
-  "durationSeconds": 120,
-  "transcriptText": "Hello, this is a test call transcript."
-}
-```
-
-### 4.5 Auth Required Endpoints
-
-All endpoints except `/api/health`, `/api/auth/register`, and `/api/auth/login` require a valid JWT bearer token. A request without a token returns **401 Unauthorized**. Add the header to every protected request:
-```
-Authorization: Bearer <your-token>
-```
-
-## 5. Troubleshooting
+## 9. Troubleshooting
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| Port 5295 already in use | Old API process still running | Run `taskkill //F //IM dotnet.exe`, then restart |
-| Frontend shows blank page | Dependencies missing | Run `npm install` in the ClientApp folder |
-| SQLite locked error | Multiple processes writing simultaneously | Close all `dotnet run` instances, delete `.sqlite-wal`, restart |
-| Unit tests fail after build | DLL locked by running API | Kill dotnet processes, then rebuild |
-| `/api/health` returns 404 | HealthController not registered | Verify file exists at `src/ServicePulse.Api/Controllers/HealthController.cs` and rebuild |
+| Port 8080 in use | Docker API container conflict | `docker-compose down` then restart |
+| DB connection failed | SQL Server not ready | Wait for healthcheck (30s), check `docker-compose logs db` |
+| AI service unhealthy | Gemini API key missing | Leave `GEMINI_API_KEY=` empty for rule-based fallback |
+| Tests fail | LocalDB conflict with test DBs | Tests use isolated DBs; ensure no other tests running |
+| Frontend blank | Vite dev server not running | `npm run dev` in `ServicePulse.Frontend.Vite` |
+| CORS errors | Reverse proxy misconfig | Verify `API_BASE_URL` in `.env` matches backend |
 
-## 6. Project Structure
+---
+
+## 10. Project Structure
 
 ```
 ServicePulse_AI_System/
 ├── backend/
 │   ├── src/
-│   │   ├── ServicePulse.Domain/          # Entities, enums, domain rules
-│   │   ├── ServicePulse.Application/     # DTOs, request models
-│   │   ├── ServicePulse.Infrastructure/  # EF Core, migrations, seeding
-│   │   ├── ServicePulse.Api/             # Controllers, middleware, Program.cs
-│   │   └── ServicePulse.Tests/           # xUnit unit tests
+│   │   ├── ServicePulse.Domain/        # Entities, enums, domain rules
+│   │   ├── ServicePulse.Application/   # DTOs, commands, queries
+│   │   ├── ServicePulse.Infrastructure/# EF Core, Hangfire, AI client
+│   │   ├── ServicePulse.Api/           # Controllers, middleware, Program.cs
+│   │   └── ServicePulse.Tests/         # xUnit tests (23 passing)
 │   └── frontend/
-│       └── ServicePulse.Frontend/        # React + Reactstrap SPA
-├── database/                             # Seed SQL scripts
-├── docs/                                 # Architecture documentation
-├── README.md                             # Project overview
-└── RUNBOOK.md                            # This file
+│       ├── ServicePulse.Frontend/          # MVC host (serves wwwroot)
+│       └── ServicePulse.Frontend.Vite/     # Vite + React 19 source
+├── ai-service/
+│   └── app/                            # Python FastAPI microservice
+├── database/
+│   └── seed/                           # SQL seed scripts
+├── docs/                               # Architecture & release docs
+├── docker-compose.yml                  # Production stack
+├── Dockerfile                          # .NET API image
+├── ai-service/Dockerfile               # Python AI service image
+├── .env.example                        # Environment template
+├── .dockerignore                       # Docker build exclusions
+├── CHANGELOG.md                        # Version history
+├── README.md                           # Project overview
+└── RUNBOOK.md                          # This file
 ```
 
-## 7. V2 Feature Checklist — Authentication & Authorization
+---
 
-- [x] `POST /api/auth/register` — create new account with BCrypt password hashing
-- [x] `POST /api/auth/login` — authenticate and issue 1-hour JWT token
-- [x] `GET /api/auth/me` — resolve current user from JWT claims
-- [x] `[Authorize]` guard on CallsController and LookupController
-- [x] `[AllowAnonymous]` on HealthController (public endpoint)
-- [x] Auto-seeded admin user on first startup (`SeedAdminIfNeeded`)
-- [x] 9 AuthService unit tests covering edge cases (duplicate email, wrong password, inactive account, case-insensitive login)
-- [x] Global exception middleware surfaces token errors consistently
+## 11. Release History
 
-## 8. V1 Feature Checklist
+| Version | Date | Highlights |
+|---|---|---|
+| **v2.0.0** | 2026-11-14 | Docker Compose, 15 transcripts, portfolio README |
+| **v1.4.0** | 2026-11-14 | Role-based filtering, 6 integration tests |
+| **v1.3.0** | 2026-11-14 | Provider tracking, Gemini fallback, audit logging |
+| **v1.2.0** | 2026-11-13 | Manager reviews, coaching notes, audit trail |
+| **v1.1.0** | 2026-11-13 | Hangfire, Python AI service, rule-based scoring |
+| **v1.0.0** | 2026-11-13 | Core platform, Clean Architecture, React SPA |
 
-- [x] Calls CRUD endpoints (GetCalls, GetCall, SearchCalls, GetStats, CreateCall)
-- [x] Pagination and search/filter (by agent name, customer name, status, date range)
-- [x] Analysis results display (sentiment, risk level, quality score, keywords)
-- [x] Manager review display (reviewer name, score, coaching notes)
-- [x] Dashboard statistics endpoint
-- [x] Health check endpoint (`GET /api/health`)
-- [x] Global exception handling middleware
-- [x] Input validation (required fields, range checks, max length)
-- [x] Unit tests (9/9 passing)
-- [x] Frontend pager component
-- [x] Postman API verification complete
+---
 
-## 9. Deploying to GitHub
-
+## 12. Git Tags
 ```bash
-# Check current state
-git log --oneline -3
-git remote -v
+# List all release tags
+git tag -l
 
-# Add remote (replace with your repo URL)
-git remote add origin https://github.com/YOUR_USERNAME/ServicePulse-AI-System.git
-
-# Push
-git branch -M main
-git push -u origin main
+# Checkout a specific version
+git checkout v1.4.0
 ```
+
+---
+
+## 13. CI/CD Notes
+
+- All 23 tests must pass before merge
+- Docker images build on push to main
+- Health checks verify container readiness
+- SQL Server Developer Edition used (free for dev/test)
+
+---
+
+*Last updated: 2026-11-14 for v2.0.0 release*
