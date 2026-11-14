@@ -37,8 +37,8 @@ export const authService = {
       headers: { 'Content-Type': 'application/json' },
     });
     const response = await api.post('/api/auth/login', credentials);
-    const { token, user } = response.data;
-    this.setAuth(token, user);
+    const { accessToken, user } = response.data;
+    this.setAuth(accessToken, user);
     return response.data;
   },
 
@@ -48,8 +48,8 @@ export const authService = {
       headers: { 'Content-Type': 'application/json' },
     });
     const response = await api.post('/api/auth/register', userData);
-    const { token, user } = response.data;
-    this.setAuth(token, user);
+    const { accessToken, user } = response.data;
+    this.setAuth(accessToken, user);
     return response.data;
   },
 
