@@ -65,9 +65,9 @@ static async Task EnsureDatabaseAsync(ServicePulseDbContext context)
     {
         await context.Database.MigrateAsync();
     }
-    catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 1801 || ex.Number == 5170)
+    catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 1801 || ex.Number == 5170 || ex.Number == -1983577846)
     {
-        // Database already exists or file conflict - just migrate
+        // Database already exists, file conflict, or LocalDB connection failure - just migrate
         await context.Database.MigrateAsync();
     }
 }
