@@ -521,7 +521,7 @@ public class IntegrationTests
     public async Task AuthUser_RoleValidation_EnforcesAllowedRoles()
     {
         // Verify that only Admin, Manager, and Agent roles are valid
-        var context = TestDbFactory.CreateContext("role-validation-test");
+        var context = TestDbFactory.CreateContext("role-validation-" + Guid.NewGuid());
         try
         {
             // Valid roles should work
@@ -530,7 +530,7 @@ public class IntegrationTests
                 var user = new ApplicationUser
                 {
                     Id = Guid.NewGuid(),
-                    Email = $"valid-{role.ToLower()}@test.com",
+                    Email = $"valid-{role.ToLower()}-{Guid.NewGuid():N}@test.com",
                     PasswordHash = "x",
                     DisplayName = $"Valid {role}",
                     Role = role,
@@ -543,7 +543,7 @@ public class IntegrationTests
 
             // Assert - all valid roles persisted successfully
             var validUsers = await context.ApplicationUsers
-                .Where(u => new[] { "Admin", "Manager", "Agent" }.Contains(u.Role))
+                .Where(u => new[] { "Admin", "Manager", "Agent" }.Contains(u.Role) && u.Email.Contains("valid-"))
                 .ToListAsync();
 
             Assert.Equal(3, validUsers.Count);
