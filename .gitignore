@@ -43,3 +43,4 @@ extract.py
 # VS Code / IDE locks
 backend/.vs/
 .vscode/
+backend/frontend/ServicePulse.Frontend/wwwroot/
