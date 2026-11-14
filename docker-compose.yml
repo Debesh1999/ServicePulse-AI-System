@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # SQL Server database (use standard edition for licensing)
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: servicepulse-db
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "ServicePulse@2026!"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'ServicePulse@2026!' -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      retries: 10
+      start_period: 30s
+    networks:
+      - servicepulse-network
+
+  # Python AI analysis microservice
+  ai-service:
+    build:
+      context: .
+      dockerfile: ai-service/Dockerfile
+    container_name: servicepulse-ai
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - servicepulse-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      retries: 3
+      start_period: 10s
+
+  # Main .NET API + React SPA
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: servicepulse-api
+    environment:
+      ConnectionStrings__DefaultConnection: "Server=db;Port=1433;Database=ServicePulseDb;User Id=sa;Password=ServicePulse@2026!;TrustServerCertificate=true;"
+      AiService__BaseUrl: "http://ai-service:8000"
+      JWT_SECRET: ${JWT_SECRET:-SuperSecretKeyValue_ForDevOnly_ChangeInProd_2026!}
+      ASPNETCORE_ENVIRONMENT: Production
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+      ai-service:
+        condition: service_healthy
+    networks:
+      - servicepulse-network
+
+volumes:
+  sqlserver_data:
+
+networks:
+  servicepulse-network:
+    driver: bridge
