@@ -54,9 +54,22 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<ServicePulseDbContext>();
-    await context.Database.MigrateAsync();
+    await EnsureDatabaseAsync(context);
     await DataSeeder.SeedAsync(context);
     AuthService.SeedAdminIfNeeded(context);
+}
+
+static async Task EnsureDatabaseAsync(ServicePulseDbContext context)
+{
+    try
+    {
+        await context.Database.MigrateAsync();
+    }
+    catch (Microsoft.Data.SqlClient.SqlException ex) when (ex.Number == 1801 || ex.Number == 5170)
+    {
+        // Database already exists or file conflict - just migrate
+        await context.Database.MigrateAsync();
+    }
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
