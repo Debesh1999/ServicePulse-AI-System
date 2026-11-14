@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ServicePulse.Api.Services;
@@ -9,15 +10,13 @@ namespace ServicePulse.Tests;
 
 public class AuthServiceTests
 {
-    private static string DbPath => Path.Combine(Path.GetTempPath(), "sp_auth_" + Guid.NewGuid().ToString("N")[..8] + ".db");
-
     private static ServicePulseDbContext CreateContext()
     {
+        var dbName = $"ServicePulseTestAuth_{Guid.NewGuid():N}";
         var options = new DbContextOptionsBuilder<ServicePulseDbContext>()
-            .UseSqlite($"Data Source={DbPath}")
+            .UseSqlServer($"Server=(localdb)\\mssqllocaldb;Database={dbName};Trusted_Connection=true;TrustServerCertificate=true")
             .Options;
         var ctx = new ServicePulseDbContext(options);
-        ctx.Database.EnsureDeleted();
         ctx.Database.EnsureCreated();
         return ctx;
     }
@@ -27,7 +26,9 @@ public class AuthServiceTests
         var config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>())
             .Build();
-        return new AuthService(ctx, config);
+
+        var httpContextAccessor = new HttpContextAccessor();
+        return new AuthService(ctx, config, httpContextAccessor);
     }
 
     [Fact]

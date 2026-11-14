@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using ServicePulse.Api.Controllers;
 using ServicePulse.Application.DTOs;
+using ServicePulse.Application.Services;
 using ServicePulse.Domain.Entities;
 using ServicePulse.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -14,24 +15,22 @@ public class CallsControllerTests
     private static ControllerContext CreateCtx() =>
         new ControllerContext { HttpContext = new DefaultHttpContext(), RouteData = new Microsoft.AspNetCore.Routing.RouteData() };
 
-    // Fresh DB file per test to ensure isolation
-    private static string DbPath => Path.Combine(Path.GetTempPath(), "sp_test_" + Guid.NewGuid().ToString("N")[..8] + ".db");
-
-    private static void SetupDb(ServicePulseDbContext ctx)
+    private static ServicePulseDbContext CreateContext()
     {
-        ctx.Database.EnsureDeleted();
-        ctx.Database.OpenConnection();
+        var dbName = $"ServicePulseTest_{Guid.NewGuid():N}";
+        var options = new DbContextOptionsBuilder<ServicePulseDbContext>()
+            .UseSqlServer($"Server=(localdb)\\mssqllocaldb;Database={dbName};Trusted_Connection=true;TrustServerCertificate=true")
+            .Options;
+        var ctx = new ServicePulseDbContext(options);
         ctx.Database.EnsureCreated();
+        return ctx;
     }
 
-    private static (ServicePulseDbContext, CallsController) NewCtx()
+    private static (ServicePulseDbContext, CallsController) NewCtx(FakeAiAnalyzer? fakeAi = null)
     {
-        var opts = new DbContextOptionsBuilder<ServicePulseDbContext>()
-            .UseSqlite($"Data Source={DbPath};Cache=Shared")
-            .Options;
-        var ctx = new ServicePulseDbContext(opts);
-        SetupDb(ctx);
-        return (ctx, new CallsController(ctx) { ControllerContext = CreateCtx() });
+        var ctx = CreateContext();
+        fakeAi ??= new FakeAiAnalyzer();
+        return (ctx, new CallsController(ctx, fakeAi, Microsoft.Extensions.Logging.Abstractions.NullLogger<CallsController>.Instance) { ControllerContext = CreateCtx() });
     }
 
     [Fact]
@@ -117,7 +116,9 @@ public class CallsControllerTests
         var req = new CreateCallRequest("Alice", "Acme", "TEST-2", DateTime.UtcNow, 90, "Hello world transcript");
         var created = Assert.IsType<CreatedAtActionResult>(await ctrl.CreateCall(req));
         var dto = Assert.IsType<CallDetailDto>(created.Value);
+        // Now returns Queued status since analysis is async via Hangfire
         Assert.Equal("Queued", dto.Status);
+        Assert.Null(dto.Analysis);
         var saved = await ctx.Calls.FindAsync(dto.Id);
         Assert.NotNull(saved);
         Assert.Equal("Queued", saved.Status);
@@ -126,7 +127,8 @@ public class CallsControllerTests
     #region Helpers
     private static (ServicePulseDbContext, CallsController) Seed()
     {
-        var (ctx, ctrl) = NewCtx();
+        var fakeAi = new FakeAiAnalyzer();
+        var (ctx, ctrl) = NewCtx(fakeAi);
 
         // Create the ApplicationUser row needed by Agent.UserId FK
         ctx.ApplicationUsers.Add(new ApplicationUser
@@ -179,7 +181,8 @@ public class CallsControllerTests
 
     private static (ServicePulseDbContext, CallsController, Call) SeedFull()
     {
-        var (ctx, ctrl) = NewCtx();
+        var fakeAi = new FakeAiAnalyzer();
+        var (ctx, ctrl) = NewCtx(fakeAi);
 
         ctx.ApplicationUsers.Add(new ApplicationUser
         {

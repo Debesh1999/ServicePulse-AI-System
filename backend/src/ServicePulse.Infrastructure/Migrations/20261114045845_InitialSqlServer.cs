@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ServicePulse.Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class InitialSqlServer : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,10 +15,10 @@ namespace ServicePulse.Infrastructure.Migrations
                 name: "Customers",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ExternalReference = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
-                    DisplayName = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
-                    ContactMasked = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false)
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ExternalReference = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    DisplayName = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
+                    ContactMasked = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -29,11 +29,11 @@ namespace ServicePulse.Infrastructure.Migrations
                 name: "Agents",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    UserId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    EmployeeCode = table.Column<string>(type: "TEXT", maxLength: 30, nullable: false),
-                    FullName = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
-                    TeamName = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false)
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    EmployeeCode = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    FullName = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
+                    TeamName = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -44,15 +44,15 @@ namespace ServicePulse.Infrastructure.Migrations
                 name: "ApplicationUsers",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false),
-                    PasswordHash = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
-                    DisplayName = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
-                    Role = table.Column<string>(type: "TEXT", maxLength: 30, nullable: false),
-                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false, defaultValue: true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
-                    RowVersion = table.Column<byte[]>(type: "BLOB", nullable: true),
-                    AgentId = table.Column<Guid>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    DisplayName = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
+                    Role = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    RowVersion = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    AgentId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -68,16 +68,16 @@ namespace ServicePulse.Infrastructure.Migrations
                 name: "Calls",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    AgentId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CustomerId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ExternalCallId = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
-                    StartedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    DurationSeconds = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
-                    Status = table.Column<string>(type: "TEXT", maxLength: 30, nullable: false),
-                    ResolutionStatus = table.Column<string>(type: "TEXT", maxLength: 30, nullable: true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    RowVersion = table.Column<byte[]>(type: "BLOB", nullable: true)
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AgentId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CustomerId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ExternalCallId = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
+                    StartedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    DurationSeconds = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    Status = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    ResolutionStatus = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "varbinary(max)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -100,17 +100,17 @@ namespace ServicePulse.Infrastructure.Migrations
                 name: "AnalysisResults",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    AnalyzerVersion = table.Column<string>(type: "TEXT", maxLength: 60, nullable: false),
-                    Sentiment = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    RiskLevel = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AnalyzerVersion = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: false),
+                    Sentiment = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    RiskLevel = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     QualityScore = table.Column<decimal>(type: "decimal(5,2)", nullable: false),
-                    Summary = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    DetectedKeywordsJson = table.Column<string>(type: "TEXT", nullable: true),
-                    AnalysisStatus = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
-                    ErrorMessage = table.Column<string>(type: "TEXT", maxLength: 1500, nullable: true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CallId = table.Column<Guid>(type: "TEXT", nullable: false)
+                    Summary = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    DetectedKeywordsJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AnalysisStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    ErrorMessage = table.Column<string>(type: "nvarchar(1500)", maxLength: 1500, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CallId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -127,15 +127,15 @@ namespace ServicePulse.Infrastructure.Migrations
                 name: "AuditLogs",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    EntityName = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
-                    EntityId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Action = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
-                    ActorUserId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    CorrelationId = table.Column<Guid>(type: "TEXT", nullable: true),
-                    DetailsJson = table.Column<string>(type: "TEXT", nullable: true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    CallId = table.Column<Guid>(type: "TEXT", nullable: true)
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    EntityName = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    EntityId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Action = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
+                    ActorUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    CorrelationId = table.Column<Guid>(type: "uniqueidentifier", nullable: true),
+                    DetailsJson = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CallId = table.Column<Guid>(type: "uniqueidentifier", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -156,13 +156,13 @@ namespace ServicePulse.Infrastructure.Migrations
                 name: "CallTranscripts",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CallId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    Text = table.Column<string>(type: "TEXT", nullable: false),
-                    Source = table.Column<string>(type: "TEXT", maxLength: 30, nullable: false),
-                    LanguageCode = table.Column<string>(type: "TEXT", maxLength: 10, nullable: false, defaultValue: "en"),
-                    WordCount = table.Column<int>(type: "INTEGER", nullable: false, defaultValue: 0),
-                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CallId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Text = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Source = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
+                    LanguageCode = table.Column<string>(type: "nvarchar(10)", maxLength: 10, nullable: false, defaultValue: "en"),
+                    WordCount = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -179,14 +179,14 @@ namespace ServicePulse.Infrastructure.Migrations
                 name: "ManagerReviews",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
-                    ReviewStatus = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    ReviewStatus = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                     ManagerScore = table.Column<decimal>(type: "decimal(5,2)", nullable: true),
-                    CoachingNotes = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: true),
-                    OverrideReason = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
-                    ReviewedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
-                    ReviewerUserId = table.Column<Guid>(type: "TEXT", nullable: false),
-                    CallId = table.Column<Guid>(type: "TEXT", nullable: false)
+                    CoachingNotes = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: true),
+                    OverrideReason = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
+                    ReviewedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ReviewerUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    CallId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -215,7 +215,8 @@ namespace ServicePulse.Infrastructure.Migrations
                 name: "IX_Agents_UserId",
                 table: "Agents",
                 column: "UserId",
-                unique: true);
+                unique: true,
+                filter: "[UserId] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AnalysisResults_CallId",

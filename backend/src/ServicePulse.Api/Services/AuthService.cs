@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using ServicePulse.Application.DTOs;
@@ -13,11 +14,13 @@ public class AuthService
 {
     private readonly ServicePulseDbContext _context;
     private readonly IConfiguration _configuration;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public AuthService(ServicePulseDbContext context, IConfiguration configuration)
+    public AuthService(ServicePulseDbContext context, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
     {
         _context = context;
         _configuration = configuration;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<TokenResponse> RegisterAsync(RegisterRequest request)
@@ -59,6 +62,27 @@ public class AuthService
     {
         var user = _context.ApplicationUsers.Find(userId)
             ?? throw new InvalidOperationException("User not found.");
+        return new Application.DTOs.UserDto(user.Id, user.Email, user.DisplayName, user.Role);
+    }
+
+    public Guid? GetCurrentUserId()
+    {
+        var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out var userId))
+            return null;
+        return userId;
+    }
+
+    public Application.DTOs.UserDto? GetCurrentUser()
+    {
+        var userId = GetCurrentUserId();
+        if (!userId.HasValue)
+            return null;
+
+        var user = _context.ApplicationUsers.Find(userId.Value);
+        if (user == null)
+            return null;
+
         return new Application.DTOs.UserDto(user.Id, user.Email, user.DisplayName, user.Role);
     }
 

@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Hangfire;
 using ServicePulse.Application.DTOs;
+using ServicePulse.Application.Services;
 using ServicePulse.Domain.Entities;
+using ServicePulse.Infrastructure.BackgroundJobs;
 using ServicePulse.Infrastructure.Persistence;
 
 namespace ServicePulse.Api.Controllers;
@@ -13,10 +16,14 @@ namespace ServicePulse.Api.Controllers;
 public class CallsController : ControllerBase
 {
     private readonly ServicePulseDbContext _context;
+    private readonly IAiAnalyzerService _aiService;
+    private readonly ILogger<CallsController> _logger;
 
-    public CallsController(ServicePulseDbContext context)
+    public CallsController(ServicePulseDbContext context, IAiAnalyzerService aiService, ILogger<CallsController> logger)
     {
         _context = context;
+        _aiService = aiService;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -281,6 +288,7 @@ public class CallsController : ControllerBase
                 CallId = call.Id,
                 Text = request.TranscriptText,
                 Source = "ManualUpload",
+                LanguageCode = "en",
                 CreatedAtUtc = DateTime.UtcNow,
                 WordCount = request.TranscriptText.Split(' ', StringSplitOptions.RemoveEmptyEntries).Length
             };
@@ -289,6 +297,11 @@ public class CallsController : ControllerBase
             _context.CallTranscripts.Add(transcript);
 
             await _context.SaveChangesAsync();
+
+            // Queue the AI analysis as a background job via Hangfire
+            // This is done before committing so if Hangfire fails, the call isn't created
+            CallAnalysisJob.QueueAnalysis(call.Id);
+
             await transaction.CommitAsync();
 
             return CreatedAtAction(nameof(GetCall), new { id = call.Id }, new CallDetailDto(
@@ -304,9 +317,10 @@ public class CallsController : ControllerBase
                 null
             ));
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             await transaction.RollbackAsync();
+            _logger.LogError(ex, "Failed to create call");
             return StatusCode(500, "An error occurred while creating the call.");
         }
     }

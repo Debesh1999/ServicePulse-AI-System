@@ -15,11 +15,10 @@ public static class TestDbFactory
         var dbName = $"ServicePulseTest_{suffix}";
 
         var options = new DbContextOptionsBuilder<ServicePulseDbContext>()
-            .UseSqlite($"DataSource={dbName};Mode=Memory;Cache=Shared")
+            .UseSqlServer($"Server=(localdb)\\mssqllocaldb;Database={dbName};Trusted_Connection=true;TrustServerCertificate=true")
             .Options;
 
         var context = new ServicePulseDbContext(options);
-        context.Database.OpenConnection();
         context.Database.EnsureCreated();
         return context;
     }

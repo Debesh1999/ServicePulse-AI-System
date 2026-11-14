@@ -59,3 +59,19 @@ public record CreateCallRequest(
     int DurationSeconds,
     string TranscriptText
 );
+
+// Manager Review DTOs
+public record CreateManagerReviewRequest(
+    Guid CallId,
+    string ReviewStatus,
+    decimal? ManagerScore,
+    string? CoachingNotes,
+    string? OverrideReason
+);
+
+public record UpdateManagerReviewRequest(
+    string ReviewStatus,
+    decimal? ManagerScore,
+    string? CoachingNotes,
+    string? OverrideReason
+);

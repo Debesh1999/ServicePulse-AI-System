@@ -1,8 +1,12 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Hangfire;
+using Hangfire.SqlServer;
 using ServicePulse.Api.Middleware;
 using ServicePulse.Api.Services;
+using ServicePulse.Application.Services;
+using ServicePulse.Infrastructure.AiAnalysis;
 using ServicePulse.Infrastructure.Persistence;
 using System.Text;
 
@@ -14,10 +18,17 @@ builder.Services.AddControllers(options =>
 });
 
 builder.Services.AddDbContext<ServicePulseDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Hangfire
+builder.Services.AddHangfire(config =>
+    config.UseSqlServerStorage(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddHangfireServer();
 
 // Auth
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddHttpClient<IAiAnalyzerService, PythonAiClient>(c =>
+    c.BaseAddress = new Uri(builder.Configuration["AiService:BaseUrl"] ?? "http://localhost:8000"));
 var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET") ?? "SuperSecretKeyValue_ForDevOnly_ChangeInProd_2026!";
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -50,6 +61,13 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseHttpsRedirection();
+app.UseHangfireDashboard("/hangfire", new DashboardOptions
+{
+    Authorization = new[] { new Hangfire.Dashboard.LocalRequestsOnlyAuthorizationFilter() }
+});
+
+// Set service locator for Hangfire job activator
+ServicePulse.Infrastructure.BackgroundJobs.ServiceLocator.Instance = app.Services;
 app.MapControllers();
 
 app.Run();
