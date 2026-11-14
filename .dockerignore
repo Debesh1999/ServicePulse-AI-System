@@ -2,7 +2,6 @@
 **/bin/**
 **/obj/**
 **/.git/**
-**/.claude/**
 **/*.csproj.user
 **/*.suo
 **/TestResults/**

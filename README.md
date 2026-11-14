@@ -231,7 +231,3 @@ ServicePulse_AI_System/
 ## 📝 License
 
 MIT — Built as a portfolio project demonstrating full-stack .NET + React + AI integration.
-
----
-
-## 🤖 Generated with [Claude Code](https://claude.com/claude-code)
