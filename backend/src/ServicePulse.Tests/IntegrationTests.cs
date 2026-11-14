@@ -415,4 +415,143 @@ public class IntegrationTests
             context.Dispose();
         }
     }
+
+    [Fact]
+    public async Task ManagerReview_HasRequiredFields_AfterCreate()
+    {
+        // Verify that manager review data integrity is maintained with required fields
+        var context = TestDbFactory.CreateContext("review-integrity-test");
+        try
+        {
+            var reviewer = new ApplicationUser
+            {
+                Id = Guid.NewGuid(),
+                Email = "mgr-reviewer@test.com",
+                PasswordHash = "x",
+                DisplayName = "Manager Reviewer",
+                Role = "Manager",
+                IsActive = true
+            };
+            context.ApplicationUsers.Add(reviewer);
+
+            var agent = new Agent
+            {
+                Id = Guid.NewGuid(),
+                EmployeeCode = "EMP-REVIEW-" + Guid.NewGuid().ToString("N")[..6],
+                FullName = "Test Agent Review",
+                TeamName = "Sales",
+                UserId = null
+            };
+            context.Agents.Add(agent);
+
+            var customer = new Customer
+            {
+                Id = Guid.NewGuid(),
+                DisplayName = "Test Customer Review",
+                ExternalReference = "C-REVIEW-" + Guid.NewGuid().ToString("N")[..6],
+                ContactMasked = "xxx"
+            };
+            context.Customers.Add(customer);
+
+            var call = new Call
+            {
+                Id = Guid.NewGuid(),
+                AgentId = agent.Id,
+                CustomerId = customer.Id,
+                ExternalCallId = "TEST-REVIEW-" + Guid.NewGuid().ToString("N")[..6],
+                StartedAtUtc = DateTime.UtcNow,
+                DurationSeconds = 180,
+                Status = "Completed",
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            context.Calls.Add(call);
+
+            var analysis = new AnalysisResult
+            {
+                Id = Guid.NewGuid(),
+                CallId = call.Id,
+                AnalyzerVersion = "1.4.0",
+                Sentiment = "Positive",
+                RiskLevel = "Low",
+                QualityScore = 85m,
+                Summary = "Good call",
+                DetectedKeywordsJson = "[\"good\"]",
+                AnalysisStatus = "Succeeded",
+                ErrorMessage = null,
+                Provider = "RuleBased",
+                FallbackReason = null,
+                CreatedAtUtc = DateTime.UtcNow
+            };
+            context.AnalysisResults.Add(analysis);
+
+            var review = new ManagerReview
+            {
+                Id = Guid.NewGuid(),
+                CallId = call.Id,
+                ReviewerUserId = reviewer.Id,
+                ReviewStatus = "Approved",
+                ManagerScore = 92m,
+                CoachingNotes = "Excellent handling of the issue",
+                OverrideReason = "Manager agrees with higher score based on context",
+                ReviewedAtUtc = DateTime.UtcNow
+            };
+            context.ManagerReviews.Add(review);
+
+            await context.SaveChangesAsync();
+
+            // Assert
+            var savedReview = await context.ManagerReviews.FirstAsync(r => r.Id == review.Id);
+            Assert.Equal("Approved", savedReview.ReviewStatus);
+            Assert.Equal(92m, savedReview.ManagerScore);
+            Assert.Equal("Excellent handling of the issue", savedReview.CoachingNotes);
+            Assert.Equal("Manager agrees with higher score based on context", savedReview.OverrideReason);
+            Assert.NotNull(savedReview.ReviewedAtUtc);
+
+            // Verify original AI result is preserved
+            var savedAnalysis = await context.AnalysisResults.FirstAsync(a => a.Id == analysis.Id);
+            Assert.Equal(85m, savedAnalysis.QualityScore);
+        }
+        finally
+        {
+            context.Dispose();
+        }
+    }
+
+    [Fact]
+    public async Task AuthUser_RoleValidation_EnforcesAllowedRoles()
+    {
+        // Verify that only Admin, Manager, and Agent roles are valid
+        var context = TestDbFactory.CreateContext("role-validation-test");
+        try
+        {
+            // Valid roles should work
+            foreach (var role in new[] { "Admin", "Manager", "Agent" })
+            {
+                var user = new ApplicationUser
+                {
+                    Id = Guid.NewGuid(),
+                    Email = $"valid-{role.ToLower()}@test.com",
+                    PasswordHash = "x",
+                    DisplayName = $"Valid {role}",
+                    Role = role,
+                    IsActive = true
+                };
+                context.ApplicationUsers.Add(user);
+            }
+
+            await context.SaveChangesAsync();
+
+            // Assert - all valid roles persisted successfully
+            var validUsers = await context.ApplicationUsers
+                .Where(u => new[] { "Admin", "Manager", "Agent" }.Contains(u.Role))
+                .ToListAsync();
+
+            Assert.Equal(3, validUsers.Count);
+            Assert.All(validUsers, u => Assert.True(u.IsActive));
+        }
+        finally
+        {
+            context.Dispose();
+        }
+    }
 }

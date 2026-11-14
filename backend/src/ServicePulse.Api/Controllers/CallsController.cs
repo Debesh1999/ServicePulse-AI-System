@@ -7,6 +7,7 @@ using ServicePulse.Application.Services;
 using ServicePulse.Domain.Entities;
 using ServicePulse.Infrastructure.BackgroundJobs;
 using ServicePulse.Infrastructure.Persistence;
+using ServicePulse.Api.Services;
 
 namespace ServicePulse.Api.Controllers;
 
@@ -18,20 +19,35 @@ public class CallsController : ControllerBase
     private readonly ServicePulseDbContext _context;
     private readonly IAiAnalyzerService _aiService;
     private readonly ILogger<CallsController> _logger;
+    private readonly AuthService _authService;
 
-    public CallsController(ServicePulseDbContext context, IAiAnalyzerService aiService, ILogger<CallsController> logger)
+    public CallsController(ServicePulseDbContext context, IAiAnalyzerService aiService, ILogger<CallsController> logger, AuthService authService)
     {
         _context = context;
         _aiService = aiService;
         _logger = logger;
+        _authService = authService;
     }
 
     [HttpGet]
     public async Task<IActionResult> GetCalls([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
     {
-        var calls = await _context.Calls
+        var caller = _authService?.GetCurrentUser();
+        var query = _context.Calls
             .Include(c => c.Agent)
             .Include(c => c.Customer)
+            .AsQueryable();
+
+        if (caller != null && caller.Role == "Agent")
+        {
+            var agent = await _context.Agents.FirstOrDefaultAsync(a => a.UserId == caller.Id);
+            if (agent != null)
+                query = query.Where(c => c.AgentId == agent.Id);
+            else
+                query = query.Where(c => false);
+        }
+
+        var calls = await query
             .OrderByDescending(c => c.StartedAtUtc)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
@@ -127,10 +143,20 @@ public class CallsController : ControllerBase
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
+        var caller = _authService?.GetCurrentUser();
         var query = _context.Calls
             .Include(c => c.Agent)
             .Include(c => c.Customer)
             .AsQueryable();
+
+        if (caller != null && caller.Role == "Agent")
+        {
+            var agent = await _context.Agents.FirstOrDefaultAsync(a => a.UserId == caller.Id);
+            if (agent != null)
+                query = query.Where(c => c.AgentId == agent.Id);
+            else
+                query = query.Where(c => false);
+        }
 
         if (!string.IsNullOrEmpty(agentName))
         {

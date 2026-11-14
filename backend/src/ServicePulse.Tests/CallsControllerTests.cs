@@ -30,7 +30,7 @@ public class CallsControllerTests
     {
         var ctx = CreateContext();
         fakeAi ??= new FakeAiAnalyzer();
-        return (ctx, new CallsController(ctx, fakeAi, Microsoft.Extensions.Logging.Abstractions.NullLogger<CallsController>.Instance) { ControllerContext = CreateCtx() });
+        return (ctx, new CallsController(ctx, fakeAi, Microsoft.Extensions.Logging.Abstractions.NullLogger<CallsController>.Instance, null) { ControllerContext = CreateCtx() });
     }
 
     [Fact]
