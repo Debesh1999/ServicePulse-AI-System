@@ -3,6 +3,8 @@ import axios from 'axios';
 const TOKEN_KEY = 'servicepulse_token';
 const USER_KEY = 'servicepulse_user';
 
+export const AUTH_CHANGED_EVENT = 'servicepulse-auth-changed';
+
 export const authService = {
   getToken() {
     return localStorage.getItem(TOKEN_KEY);
@@ -16,11 +18,13 @@ export const authService = {
   save(token, user) {
     localStorage.setItem(TOKEN_KEY, token);
     localStorage.setItem(USER_KEY, JSON.stringify(user));
+    window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
   },
 
   clear() {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+    window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
   },
 
   async register(email, password, displayName, role = 'Agent') {

@@ -1,22 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { Collapse, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink, Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import { Link } from 'react-router-dom';
-import { authService } from '../services/authService';
+import { authService, AUTH_CHANGED_EVENT } from '../services/authService';
 import './NavMenu.css';
 
 export function NavMenu() {
   const [collapsed, setCollapsed] = useState(true);
-  const [user, setUser] = useState(authService.getUser());
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [, forceRender] = useState(0);
+  const user = authService.getUser();
 
   useEffect(() => {
-    const onStorage = (e) => {
-      if (e.key === 'servicepulse_user') {
-        setUser(e.newValue ? JSON.parse(e.newValue) : null);
-      }
-    };
-    window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+    const onAuthChanged = () => forceRender((n) => n + 1);
+    window.addEventListener(AUTH_CHANGED_EVENT, onAuthChanged);
+    return () => window.removeEventListener(AUTH_CHANGED_EVENT, onAuthChanged);
   }, []);
 
   const toggleNavbar = () => setCollapsed((c) => !c);
@@ -24,7 +21,6 @@ export function NavMenu() {
 
   const handleLogout = () => {
     authService.clear();
-    setUser(null);
     window.location.href = '/login';
   };
 
